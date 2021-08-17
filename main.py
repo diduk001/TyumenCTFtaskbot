@@ -1,18 +1,14 @@
-import os
-
-try:
-    BOT_TOKEN = os.environ["BOT_TOKEN"]
-except KeyError:
-    raise KeyError("Envionment variable BOT_TOKEN is not defined")
+from resources import Resources
+from config import Config
 
 from aiogram import Bot, Dispatcher, executor, types
 
-bot = Bot(BOT_TOKEN)
+bot = Bot(Config.BOT_TOKEN)
 dp = Dispatcher(bot)
 
 @dp.message_handler(commands='start')
 async def start_cmd_handler(message: types.Message):
-    await message.reply("hello blin...")
+    await message.reply(Resources.START_MSG)
 
 @dp.message_handler()
 async def echo(message: types.Message):
