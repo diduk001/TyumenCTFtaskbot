@@ -1,6 +1,5 @@
 from resources import Resources
 from config import Config
-import re
 from aiogram import Bot, Dispatcher, executor, types
 
 bot = Bot(Config.BOT_TOKEN)
@@ -8,19 +7,19 @@ dp = Dispatcher(bot)
 
 stage = 0
 # Эти переменный в субд кинуть
-user_name = ''
-user_surname = ''
-mail = ''
+user_name = ""
+user_surname = ""
+mail = ""
 mail_valid = False
-nickname = ''
-city = ''
-age = ''
-grade = ''
-school = ''
-registration_complete = ''
+nickname = ""
+city = ""
+age = ""
+grade = ""
+school = ""
+registration_complete = ""
 
 
-@dp.message_handler(commands='start')
+@dp.message_handler(commands="start")
 async def start_cmd_handler(message: types.Message):
     global stage
     await message.answer(Resources.START_MSG)
@@ -65,5 +64,5 @@ async def name_handler(message: types.Message):
         stage += 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
