@@ -51,9 +51,13 @@ async def name_handler(message: types.Message):
         await message.answer(Resources.MAIL)
         stage += 1
     elif stage == 3:
-        mail = message.text
-        await message.answer(Resources.NICKNAME)
-        stage += 1
+        if not Resources.MAIL_REGEX.findall(message.text):
+            await message.answer(Resources.MAIL_INVALID)
+            await message.answer(Resources.NEW_MAIL)
+        else:
+            mail = message.text
+            stage += 1
+            await message.answer(Resources.NICKNAME)
     elif stage == 4:
         nickname = message.text
         await message.answer(Resources.CITY)
