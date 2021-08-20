@@ -43,8 +43,11 @@ class User(Base):
         session.delete(self)
         session.commit()
 
+    def toAdmin(self):
+        self.isAdmin = True
+        session.commit()
 
-def findUserChatID(chatId: int) -> User:
+def findUserByChatID(chatId: int) -> User:
     found = session.query(User).filter(User.chatId == chatId)
     if found:
         return found.first()

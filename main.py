@@ -1,15 +1,16 @@
+from sqlalchemy.sql.functions import current_user
 from resources import Resources
 from config import Config
 from aiogram import Bot, Dispatcher, types, executor
-from models import User, findUserChatID, session
+from models import User, findUserByChatID, session
 
 bot = Bot(Config.BOT_TOKEN)
 dp = Dispatcher(bot)
 
 
-@dp.message_handler(commands="start")
+@dp.message_handler(commands='start')
 async def start_cmd_handler(message: types.Message):
-    if findUserChatID(message.chat.id):
+    if findUserByChatID(message.chat.id):
         await message.answer(Resources.SIGNED_UP)
     else:
         u = User(chatId=message.chat.id)
@@ -32,7 +33,7 @@ async def start_cmd_handler(message: types.Message):
 
 @dp.message_handler(commands="kill")
 async def kill_cmd_handler(message: types.Message):
-    cur_user = findUserChatID(message.chat.id)
+    cur_user = findUserByChatID(message.chat.id)
 
     if not cur_user:
         await message.answer(Resources.NOT_SIGNED_UP)
@@ -41,9 +42,18 @@ async def kill_cmd_handler(message: types.Message):
         await message.answer(Resources.KILLED_SUCCESS)
 
 
+@dp.message_handler(commands=Resources.ADMIN_PASS)
+async def admin_login_handler(message: types.Message):
+    cur_user = findUserByChatID(message.chat.id)
+    if not cur_user:
+        await message.answer(Resources.NOT_SIGNED_UP)
+    else:
+        cur_user.toAdmin()
+        await message.answer(Resources.ADMIN_SUCCESS)
+
 @dp.message_handler()
 async def msg_handler(message: types.Message):
-    cur_user = findUserChatID(message.chat.id)
+    cur_user = findUserByChatID(message.chat.id)
     # пользователя нет в БД
     if not cur_user:
         await message.answer(Resources.NOT_SIGNED_UP)
@@ -58,10 +68,11 @@ async def msg_handler(message: types.Message):
             cur_user.surname = msg_text
             await message.answer(Resources.EMAIL)
         elif stg == 3:
+            while not Config.MAIL_REGEX.match(msg_text):
+                await message.answer(Resources.MAIL_INVALID)
+                await message.answer(Resources.NEW_MAIL)
+
             cur_user.email = msg_text
-
-            # We need to validate email here
-
             await message.answer(Resources.NICKNAME)
         elif stg == 4:
             cur_user.nickname = msg_text
@@ -70,16 +81,18 @@ async def msg_handler(message: types.Message):
             cur_user.city = msg_text
             await message.answer(Resources.AGE)
         elif stg == 6:
+            while not Config.DIGITS_REGEX.match(msg_text):
+                await message.answer(Resources.AGE_INVALID)
+                await message.answer(Resources.NEW_AGE)
+
             cur_user.age = int(msg_text)
-
-            # We need to validate age here
-
             await message.answer(Resources.GRADE)
         elif stg == 7:
+            while not Config.DIGITS_REGEX.match(msg_text):
+                await message.answer(Resources.GRADE_INVALID)
+                await message.answer(Resources.NEW_GRADE)
+
             cur_user.grade = int(msg_text)
-
-            # We need to validate grade here
-
             await message.answer(Resources.SCHOOL)
         elif stg == 8:
             cur_user.school = msg_text
@@ -89,5 +102,5 @@ async def msg_handler(message: types.Message):
             session.commit()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
