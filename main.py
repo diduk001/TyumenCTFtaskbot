@@ -57,9 +57,10 @@ async def msg_handler(message: types.Message):
     # пользователя нет в БД
     if not cur_user:
         await message.answer(Resources.NOT_SIGNED_UP)
-    else:
+    elif cur_user.signUpStage <= 8:
         stg = cur_user.signUpStage
         msg_text = message.text
+        success = True
 
         if stg == 1:
             cur_user.name = msg_text
@@ -68,12 +69,13 @@ async def msg_handler(message: types.Message):
             cur_user.surname = msg_text
             await message.answer(Resources.EMAIL)
         elif stg == 3:
-            while not Config.MAIL_REGEX.match(msg_text):
-                await message.answer(Resources.MAIL_INVALID)
-                await message.answer(Resources.NEW_MAIL)
-
-            cur_user.email = msg_text
-            await message.answer(Resources.NICKNAME)
+            if not Config.MAIL_REGEX.match(msg_text):
+                success = False
+                await message.answer(Resources.EMAIL_INVALID)
+                await message.answer(Resources.NEW_EMAIL)
+            else:
+                cur_user.email = msg_text
+                await message.answer(Resources.NICKNAME)
         elif stg == 4:
             cur_user.nickname = msg_text
             await message.answer(Resources.CITY)
@@ -81,23 +83,26 @@ async def msg_handler(message: types.Message):
             cur_user.city = msg_text
             await message.answer(Resources.AGE)
         elif stg == 6:
-            while not Config.DIGITS_REGEX.match(msg_text):
+            if not Config.DIGITS_REGEX.match(msg_text):
+                success = False
                 await message.answer(Resources.AGE_INVALID)
                 await message.answer(Resources.NEW_AGE)
-
-            cur_user.age = int(msg_text)
-            await message.answer(Resources.GRADE)
+            else:
+                cur_user.age = int(msg_text)
+                await message.answer(Resources.GRADE)
         elif stg == 7:
-            while not Config.DIGITS_REGEX.match(msg_text):
+            if not Config.DIGITS_REGEX.match(msg_text):
+                success = False
                 await message.answer(Resources.GRADE_INVALID)
                 await message.answer(Resources.NEW_GRADE)
-
-            cur_user.grade = int(msg_text)
-            await message.answer(Resources.SCHOOL)
+            else:
+                cur_user.grade = int(msg_text)
+                await message.answer(Resources.SCHOOL)
         elif stg == 8:
             cur_user.school = msg_text
             await message.answer(Resources.REGISTRATION_COMPLETE)
-        if stg <= 8:
+        
+        if success:
             cur_user.signUpStage += 1
             session.commit()
 
