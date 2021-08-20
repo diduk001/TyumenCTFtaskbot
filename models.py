@@ -47,6 +47,9 @@ class User(Base):
         self.isAdmin = True
         session.commit()
 
+    def isAdmin(self) -> bool:
+        return self.isAdmin
+
 def findUserByChatID(chatId: int) -> User:
     found = session.query(User).filter(User.chatId == chatId)
     if found:

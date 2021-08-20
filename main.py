@@ -1,4 +1,3 @@
-from sqlalchemy.sql.functions import current_user
 from resources import Resources
 from config import Config
 from aiogram import Bot, Dispatcher, types, executor
