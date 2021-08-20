@@ -23,6 +23,7 @@ class User(Base):
     chatId = Column(Integer, unique=True, primary_key=True)
 
     isAdmin = Column(Boolean, default=False)
+    isBanned = Column(Boolean, default=False)
 
     name = Column(String(50))
     surname = Column(String(50))
@@ -35,20 +36,32 @@ class User(Base):
 
     signUpStage = Column(Integer)
 
-    def signUpUser(self):
+    def signUpUser(self) -> None:
         session.add(self)
         session.commit()
 
-    def deleteUser(self):
+    def deleteUser(self) -> None:
         session.delete(self)
         session.commit()
 
-    def toAdmin(self):
+    def toAdmin(self) -> None:
         self.isAdmin = True
         session.commit()
 
     def isAdmin(self) -> bool:
         return self.isAdmin
+
+    def ban(self) -> None:
+        self.isBanned = True
+        session.commit()
+
+    def unban(self) -> None:
+        self.isBanned = True
+        session.commit()
+
+    def isBanned(self) -> bool:
+        return self.isBanned
+
 
 def findUserByChatID(chatId: int) -> User:
     found = session.query(User).filter(User.chatId == chatId)

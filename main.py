@@ -36,19 +36,24 @@ async def kill_cmd_handler(message: types.Message):
 
     if not cur_user:
         await message.answer(Resources.NOT_SIGNED_UP)
+    elif cur_user.isBanned():
+        await message.answer(Resources.BANNED)
     else:
         cur_user.deleteUser()
         await message.answer(Resources.KILLED_SUCCESS)
 
 
-@dp.message_handler(commands=Resources.ADMIN_PASS)
+@dp.message_handler(commands=Config.ADMIN_PASS)
 async def admin_login_handler(message: types.Message):
     cur_user = findUserByChatID(message.chat.id)
     if not cur_user:
         await message.answer(Resources.NOT_SIGNED_UP)
+    elif cur_user.isBanned():
+        await message.answer(Resources.BANNED)
     else:
         cur_user.toAdmin()
         await message.answer(Resources.ADMIN_SUCCESS)
+
 
 @dp.message_handler()
 async def msg_handler(message: types.Message):
@@ -56,6 +61,8 @@ async def msg_handler(message: types.Message):
     # пользователя нет в БД
     if not cur_user:
         await message.answer(Resources.NOT_SIGNED_UP)
+    elif cur_user.isBanned():
+        await message.answer(Resources.BANNED)
     elif cur_user.signUpStage <= 8:
         stg = cur_user.signUpStage
         msg_text = message.text
@@ -100,7 +107,7 @@ async def msg_handler(message: types.Message):
         elif stg == 8:
             cur_user.school = msg_text
             await message.answer(Resources.REGISTRATION_COMPLETE)
-        
+
         if success:
             cur_user.signUpStage += 1
             session.commit()
