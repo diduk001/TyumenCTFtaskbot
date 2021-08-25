@@ -1,6 +1,7 @@
 import os
 import re
 
+
 class Config:
     ADMIN_PASS = (open("admin_pass.txt", "r")).readlines()[0][0:-1]
 

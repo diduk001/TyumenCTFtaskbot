@@ -1,13 +1,17 @@
+from aiogram import Bot, Dispatcher, types, executor
+from aiogram.types.inline_keyboard import InlineKeyboardButton
+from aiogram.utils.markdown import *
+
 from resources import Resources
 from config import Config
-from aiogram import Bot, Dispatcher, types, executor
-from models import User, findUserByChatID, session
+
+from models import *
 
 bot = Bot(Config.BOT_TOKEN)
 dp = Dispatcher(bot)
 
 
-@dp.message_handler(commands='start')
+@dp.message_handler(commands="start")
 async def start_cmd_handler(message: types.Message):
     if findUserByChatID(message.chat.id):
         await message.answer(Resources.SIGNED_UP)
@@ -16,6 +20,8 @@ async def start_cmd_handler(message: types.Message):
 
         u.name = ""
         u.surname = ""
+        u.admin = False
+        u.banned = False
         u.email = ""
         u.nickname = ""
         u.age = 0
@@ -53,6 +59,64 @@ async def admin_login_handler(message: types.Message):
     else:
         cur_user.toAdmin()
         await message.answer(Resources.ADMIN_SUCCESS)
+
+
+@dp.message_handler(commands="tasks")
+async def all_tasks_handler(message: types.Message):
+    cur_user = findUserByChatID(message.chat.id)
+    ctgs = getCategoriesSolvedAll(cur_user)
+
+    kb_markup = types.InlineKeyboardMarkup(row_width=1)
+    for category, solved, all in ctgs:
+        btn_text = Resources.BTN_TXT_CATEGORY_FORMAT.format(
+            category, solved, all)
+        btn_callback = Resources.CATEGORY_CALLBACK_FORMAT.format(category)
+        btn = InlineKeyboardButton(btn_text, callback_data=btn_callback)
+
+        kb_markup.add(btn)
+    await message.answer(Resources.CHOOSE_CATEGORY, reply_markup=kb_markup)
+
+
+@dp.callback_query_handler()
+async def task_and_category_handler(query: types.CallbackQuery):
+    data = query.data
+    callback_type = data.split("_")[0]
+
+    if callback_type == "category":
+        category = query.data.split("_")[1]
+        await query.answer(Resources.CHOSEN_CATEGORY_FORMAT.format(category))
+
+        cur_user = findUserByChatID(query.from_user.id)
+
+        tasks = getTasksByCategory(category)
+        kb_markup = types.InlineKeyboardMarkup(row_width=1)
+
+        for t in tasks:
+            btn_text = Resources.BTN_TXT_TASK_FORMAT.format(t.name, t.value)
+            if solved(cur_user, t):
+                btn_text = strikethrough(btn_text)
+            btn_callback = Resources.TASK_CALLBACK_FORMAT.format(
+                t.category, t.name)
+            btn = InlineKeyboardButton(btn_text, callback_data=btn_callback)
+
+            kb_markup.add(btn)
+        await bot.send_message(
+            query.from_user.id, Resources.CHOOSE_TASK, reply_markup=kb_markup
+        )
+    elif callback_type == "task":
+        _, task_category, task_name = data.split("_")
+        await query.answer(Resources.CHOSEN_TASK_FORMAT.format(task_name))
+
+        task = getTaskByNameCategory(task_name, task_category)
+        description = task.description
+        value = task.value
+        # TODO:
+        # Inline submit flag button here
+        await bot.send_message(
+            query.from_user.id,
+            Resources.TASK_DISPLAYING_FORMAT.format(
+                task_name, value, description),
+        )
 
 
 @dp.message_handler()
@@ -113,5 +177,6 @@ async def msg_handler(message: types.Message):
             session.commit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    randTasks(25)
     executor.start_polling(dp, skip_updates=True)
